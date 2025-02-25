@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tetris - Humain vs IA</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            overflow-x: hidden;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #333;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .game-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .player-container,
+        .ai-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100px;
+        }
+
+        .left-panel {
+            margin-right: 10px;
+        }
+
+        .right-panel {
+            margin-left: 10px;
+        }
+
+        .board-with-title {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .player-title,
+        .ai-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .board {
+            border: 2px solid #333;
+            width: 240px;
+            height: 480px;
+            position: relative;
+            background-color: #111;
+        }
+
+        .next-piece {
+            border: 2px solid #333;
+            width: 100px;
+            height: 100px;
+            background-color: #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .score-board {
+            border: 2px solid #333;
+            padding: 10px;
+            background-color: #222;
+            color: white;
+            width: 100px;
+            box-sizing: border-box;
+        }
+
+        .cell {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease;
+        }
+
+        .controls {
+            text-align: center;
+            background-color: #222;
+            color: white;
+            padding: 8px;
+            border: 2px solid #333;
+            width: 100px;
+            box-sizing: border-box;
+            font-size: 12px;
+        }
+
+        button {
+            padding: 8px 16px;
+            margin: 0 5px;
+            cursor: pointer;
+            background-color: #4a4a4a;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background-color: #5a5a5a;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            z-index: 10;
+            display: none;
+        }
+
+        .winner-message {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFD700;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            display: none;
+        }
+
+        .special-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 8px 16px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 5;
+            display: none;
+            animation: fadeInOut 2s ease;
+        }
+
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 1;
+            }
+
+            80% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        h3 {
+            margin: 3px 0;
+            font-size: 14px;
+        }
+
+        p {
+            margin: 3px 0;
+            font-size: 12px;
+        }
+
+        .center-info {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            z-index: 2;
+        }
+
+        #status-message {
+            padding: 8px;
+            background-color: #222;
+            color: white;
+            border-radius: 5px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+            font-size: 14px;
+            max-width: 200px;
+        }
+
+        .bonus-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 8px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .bonus-item {
+            text-align: center;
+            padding: 5px;
+            font-size: 13px;
+            color: white;
+        }
+
+        .bonus-active {
+            background-color: #4CAF50;
+            animation: pulse 1s infinite;
+            color: white;
+            border-radius: 5px;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.7;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.7;
+            }
+        }
+
+        .timer {
+            font-size: 12px;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .button-container {
+            margin: 10px 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        @media (max-width: 700px) {
+            .game-container {
+                flex-direction: column;
+            }
+
+            .player-container,
+            .ai-container {
+                flex-direction: column;
+            }
+
+            .side-panel {
+                flex-direction: row;
+                width: 240px;
+                margin: 10px 0;
+            }
+
+            .left-panel,
+            .right-panel {
+                margin: 0;
+            }
+
+            .center-info {
+                position: static;
+                transform: none;
+                margin: 10px 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <h1>Tetris - Humain vs IA</h1>
+
+        <div class="game-container">
+            <div class="player-container">
+                <div class="side-panel left-panel">
+                    <div class="next-piece" id="player-next-piece"></div>
+                    <div class="score-board">
+                        <h3>Score</h3>
+                        <p id="player-score">0</p>
+                        <h3>Lignes</h3>
+                        <p id="player-lines">0</p>
+                        <h3>Niveau</h3>
+                        <p id="player-level">1</p>
+                    </div>
+                    <div class="controls">
+                        <h3>Contrôles</h3>
+                        <p>↑ : Rotation</p>
+                        <p>← → : Déplacer</p>
+                        <p>↓ : Descendre</p>
+                        <p>Espace : Chute</p>
+                    </div>
+                </div>
+
+                <div class="board-with-title">
+                    <div class="player-title">Joueur</div>
+                    <div class="board" id="player-board">
+                        <div class="game-over" id="player-game-over">
+                            <p>Partie terminée!</p>
+                            <p id="player-final-score">Score: 0</p>
+                        </div>
+                        <div class="special-effect" id="player-effect"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations centrales entre les deux jeux -->
+            <div class="center-info">
+                <div id="status-message">En attente de démarrage...</div>
+
+                <div class="bonus-info">
+                    <div class="bonus-item" id="pause-douceur">
+                        <div>Pause Douceur</div>
+                        <div class="timer" id="pause-timer"></div>
+                    </div>
+                    <div class="bonus-item" id="arc-en-ciel">
+                        <div>Arc-en-Ciel</div>
+                        <div class="timer" id="arc-timer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-container">
+                <div class="board-with-title">
+                    <div class="ai-title">IA</div>
+                    <div class="board" id="ai-board">
+                        <div class="game-over" id="ai-game-over">
+                            <p>Partie terminée!</p>
+                            <p id="ai-final-score">Score: 0</p>
+                        </div>
+                        <div class="special-effect" id="ai-effect"></div>
+                    </div>
+                </div>
+
+                <div class="side-panel right-panel">
+                    <div class="next-piece" id="ai-next-piece"></div>
+                    <div class="score-board">
+                        <h3>Score</h3>
+                        <p id="ai-score">0</p>
+                        <h3>Lignes</h3>
+                        <p id="ai-lines">0</p>
+                        <h3>Niveau</h3>
+                        <p id="ai-level">1</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="winner-message" id="winner-message"></div>
+
+        <div class="button-container">
+            <button id="start-game">Démarrer</button>
+            <button id="restart-game">Redémarrer</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration du jeu
+        const COLS = 10;
+        const ROWS = 20;
+        const BLOCK_SIZE = 24; // Réduit de 30 à 24
+        const ORIGINAL_COLORS = [
+            'cyan', 'blue', 'orange', 'yellow', 'green', 'purple', 'red'
+        ];
+
+        let CURRENT_COLORS = [...ORIGINAL_COLORS];
+
+        // Formes des pièces (I, J, L, O, S, T, Z)
+        const SHAPES = [
+            // I
+            [
+                [0, 0, 0, 0],
+                [1, 1, 1, 1],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0]
+            ],
+            // J
+            [
+                [1, 0, 0],
+                [1, 1, 1],
+                [0, 0, 0]
+            ],
+            // L
+            [
+                [0, 0, 1],
+                [1, 1, 1],
+                [0, 0, 0]
+            ],
+            // O
+            [
+                [1, 1],
+                [1, 1]
+            ],
+            // S
+            [
+                [0, 1, 1],
+                [1, 1, 0],
+                [0, 0, 0]
+            ],
+            // T
+            [
+                [0, 1, 0],
+                [1, 1, 1],
+                [0, 0, 0]
+            ],
+            // Z
+            [
+                [1, 1, 0],
+                [0, 1, 1],
+                [0, 0, 0]
+            ]
+        ];
+
+        // Pièces faciles (I et O) pour le cadeau
+        const EASY_PIECES = [0, 3]; // Indices dans SHAPES
+
+        // VARIABLES GLOBALES DU JEU
+        let playerGame = null;
+        let aiGame = null;
+        let gameRunning = false;
+
+        // Séquence aléatoire de pièces (identique pour joueur et IA)
+        let pieceSequence = [];
+        let pieceIndex = 0;
+
+        // Variables pour les bonus
+        let arcEnCielTimer = null;
+        let pauseDouxeurTimer = null;
+        let arcEnCielActive = false;
+        let pauseDouxeurActive = false;
+        let gameStartTime = 0;
+        let gameTimerInterval = null; // Pour suivre l'intervalle principal du jeu
+
+        function generatePieceSequence(count = 100) {
+            for (let i = 0; i < count; i++) {
+                pieceSequence.push(Math.floor(Math.random() * SHAPES.length));
+            }
+        }
+
+        function getPieceFromSequence() {
+            const shapeIndex = pieceSequence[pieceIndex++];
+            if (pieceIndex >= pieceSequence.length - 10) {
+                // Générer plus de pièces si nécessaire
+                generatePieceSequence(100);
+            }
+
+            const shape = SHAPES[shapeIndex];
+            const color = CURRENT_COLORS[shapeIndex];
+
+            return {
+                shape,
+                color,
+                row: 0,
+                col: Math.floor((COLS - shape[0].length) / 2),
+                type: shapeIndex
+            };
+        }
+
+        // Fonction pour donner une pièce facile
+        function getEasyPiece() {
+            const pieceType = EASY_PIECES[Math.floor(Math.random() * EASY_PIECES.length)];
+            const shape = SHAPES[pieceType];
+            const color = CURRENT_COLORS[pieceType];
+
+            return {
+                shape,
+                color,
+                row: 0,
+                col: Math.floor((COLS - shape[0].length) / 2),
+                type: pieceType
+            };
+        }
+
+        // Fonction pour afficher des statuts
+        function showStatus(message) {
+            const statusElement = document.getElementById('status-message');
+            statusElement.textContent = message;
+            statusElement.style.display = 'block';
+            console.log(message);
+        }
+
+        // Remplacer la fonction showEffect par celle-ci
+        function showEffect(player, message, duration = 2000) {
+            const effectElement = document.getElementById(player + '-effect');
+
+            // Vérifier si l'élément existe avant de modifier ses propriétés
+            if (effectElement) {
+                effectElement.textContent = message;
+                effectElement.style.display = 'block';
+
+                setTimeout(() => {
+                    // Vérifier à nouveau que l'élément existe avant de le modifier
+                    if (effectElement) {
+                        effectElement.style.display = 'none';
+                    }
+                }, duration);
+            } else {
+                console.warn(`Élément d'effet pour ${player} introuvable`);
+            }
+        }
+
+        // Fonctions pour les bonus avec correction des timers
+        function startArcEnCiel() {
+            if (arcEnCielActive) return;
+
+            arcEnCielActive = true;
+            document.getElementById('arc-en-ciel').classList.add('bonus-active');
+
+            // Générer des couleurs vives aléatoires
+            CURRENT_COLORS = Array(7).fill().map(() => {
+                const hue = Math.floor(Math.random() * 360);
+                return `hsl(${hue}, 100%, 60%)`;
+            });
+
+            // Mettre à jour l'affichage des pièces
+            if (playerGame) playerGame.updatePieceColors();
+            if (aiGame) aiGame.updatePieceColors();
+
+            // Timer pour revenir aux couleurs normales
+            let remainingTime = 20;
+            updateArcTimer(remainingTime);
+
+            showEffect('player', '🌈 Arc-en-Ciel Activé!');
+            showEffect('ai', '🌈 Arc-en-Ciel Activé!');
+
+            // Nettoyer l'ancien timer si existant
+            if (arcEnCielTimer) {
+                clearInterval(arcEnCielTimer);
+                arcEnCielTimer = null;
+            }
+
+            arcEnCielTimer = setInterval(function () {
+                remainingTime--;
+                updateArcTimer(remainingTime);
+                console.log("Arc-en-ciel: " + remainingTime + "s");
+
+                if (remainingTime <= 0) {
+                    stopArcEnCiel();
+                }
+            }, 1000);
+        }
+
+        function updateArcTimer(time) {
+            const timerElement = document.getElementById('arc-timer');
+            if (timerElement) {
+                timerElement.textContent = time + "s";
+                timerElement.style.display = 'block';
+            }
+        }
+
+        function stopArcEnCiel() {
+            if (!arcEnCielActive) return;
+
+            if (arcEnCielTimer) {
+                clearInterval(arcEnCielTimer);
+                arcEnCielTimer = null;
+            }
+
+            arcEnCielActive = false;
+            document.getElementById('arc-en-ciel').classList.remove('bonus-active');
+            document.getElementById('arc-timer').textContent = '';
+            document.getElementById('arc-timer').style.display = 'none';
+
+            // Revenir aux couleurs originales
+            CURRENT_COLORS = [...ORIGINAL_COLORS];
+
+            // Mettre à jour l'affichage des pièces
+            if (playerGame) playerGame.updatePieceColors();
+            if (aiGame) aiGame.updatePieceColors();
+        }
+
+        function startPauseDouceur() {
+            if (pauseDouxeurActive) return;
+
+            pauseDouxeurActive = true;
+            document.getElementById('pause-douceur').classList.add('bonus-active');
+
+            // Ralentir les pièces de 20%
+            if (playerGame) playerGame.applySpeedModifier(0.8);
+            if (aiGame) aiGame.applySpeedModifier(0.8);
+
+            // Timer pour revenir à la vitesse normale
+            let remainingTime = 10;
+            updatePauseTimer(remainingTime);
+
+            showEffect('player', '😌 Pause Douceur Activée!');
+            showEffect('ai', '😌 Pause Douceur Activée!');
+
+            // Nettoyer l'ancien timer si existant
+            if (pauseDouxeurTimer) {
+                clearInterval(pauseDouxeurTimer);
+                pauseDouxeurTimer = null;
+            }
+
+            pauseDouxeurTimer = setInterval(function () {
+                remainingTime--;
+                updatePauseTimer(remainingTime);
+                console.log("Pause Douceur: " + remainingTime + "s");
+
+                if (remainingTime <= 0) {
+                    stopPauseDouceur();
+                }
+            }, 1000);
+        }
+
+        function updatePauseTimer(time) {
+            const timerElement = document.getElementById('pause-timer');
+            if (timerElement) {
+                timerElement.textContent = time + "s";
+                timerElement.style.display = 'block';
+            }
+        }
+
+        function stopPauseDouceur() {
+            if (!pauseDouxeurActive) return;
+
+            if (pauseDouxeurTimer) {
+                clearInterval(pauseDouxeurTimer);
+                pauseDouxeurTimer = null;
+            }
+
+            pauseDouxeurActive = false;
+            document.getElementById('pause-douceur').classList.remove('bonus-active');
+            document.getElementById('pause-timer').textContent = '';
+            document.getElementById('pause-timer').style.display = 'none';
+
+            // Revenir à la vitesse normale
+            if (playerGame) playerGame.applySpeedModifier(1);
+            if (aiGame) aiGame.applySpeedModifier(1);
+        }
+
+        // Timer principal du jeu
+        function startGameTimer() {
+            gameStartTime = Date.now();
+
+            // Arrêter le timer précédent s'il existe
+            if (gameTimerInterval) {
+                clearInterval(gameTimerInterval);
+                gameTimerInterval = null;
+            }
+
+            // Vérifier toutes les secondes si on atteint 2 minutes pour l'arc-en-ciel
+            gameTimerInterval = setInterval(function () {
+                if (!gameRunning) return;
+
+                const elapsedSeconds = Math.floor((Date.now() - gameStartTime) / 1000);
+
+                // Activer Arc-en-Ciel toutes les 2 minutes (120 secondes)
+                if (elapsedSeconds > 0 && elapsedSeconds % 120 === 0 && !arcEnCielActive) {
+                    startArcEnCiel();
+                }
+            }, 1000);
+        }
+
+        function stopGameTimer() {
+            if (gameTimerInterval) {
+                clearInterval(gameTimerInterval);
+                gameTimerInterval = null;
+            }
+        }
+
+        class Tetris {
+            constructor(boardElement, nextPieceElement, scoreElement, linesElement, levelElement,
+                gameOverElement, finalScoreElement, isAI = false) {
+                this.boardElement = boardElement;
+                this.nextPieceElement = nextPieceElement;
+                this.scoreElement = scoreElement;
+                this.linesElement = linesElement;
+                this.levelElement = levelElement;
+                this.gameOverElement = gameOverElement;
+                this.finalScoreElement = finalScoreElement;
+                this.isAI = isAI;
+                this.boardId = isAI ? 'ai-board' : 'player-board';
+                this.effectId = isAI ? 'ai-effect' : 'player-effect';
+
+                this.aiMoveTimer = null;
+
+                this.board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+                this.score = 0;
+                this.lines = 0;
+                this.level = 1;
+                this.isGameOver = false;
+                this.baseDropInterval = this.isAI ? 300 : 1000; // Plus rapide pour l'IA
+                this.speedModifier = 1;
+                this.dropInterval = this.baseDropInterval;
+                this.dropTimer = null;
+                this.currentPiece = null;
+                this.nextPiece = getPieceFromSequence();
+                this.forcedNextPiece = null;
+
+                this.init();
+            }
+
+            init() {
+                this.createBoard();
+                this.updateScore();
+                this.spawnPiece();
+            }
+
+            start() {
+                if (this.dropTimer) {
+                    clearInterval(this.dropTimer);
+                    this.dropTimer = null;
+                }
+
+                showStatus(this.isAI ? "L'IA commence à jouer" : "Le joueur peut commencer à jouer");
+                this.startDrop();
+
+                if (this.isAI) {
+                    this.startAI();
+                }
+            }
+
+            createBoard() {
+                // Vider le tableau
+                while (this.boardElement.firstChild) {
+                    this.boardElement.removeChild(this.boardElement.firstChild);
+                }
+
+                // Ajouter l'élément game-over
+                this.boardElement.appendChild(this.gameOverElement);
+
+                // Créer et ajouter l'élément d'effet spécial s'il n'existe pas déjà
+                const effectElement = document.getElementById(this.effectId);
+                if (effectElement) {
+                    this.boardElement.appendChild(effectElement);
+                }
+
+                // Créer les cellules vides du tableau
+                for (let row = 0; row < ROWS; row++) {
+                    for (let col = 0; col < COLS; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.style.top = `${row * BLOCK_SIZE}px`;
+                        cell.style.left = `${col * BLOCK_SIZE}px`;
+                        cell.style.backgroundColor = '#111';
+                        cell.setAttribute('data-row', row);
+                        cell.setAttribute('data-col', col);
+                        this.boardElement.appendChild(cell);
+                    }
+                }
+            }
+
+            spawnPiece() {
+                // Utiliser une pièce forcée si disponible
+                if (this.forcedNextPiece) {
+                    this.currentPiece = this.forcedNextPiece;
+                    this.forcedNextPiece = null;
+                    showEffect(this.isAI ? 'ai' : 'player', '🎁 Pièce Cadeau!');
+                } else {
+                    this.currentPiece = this.nextPiece;
+                }
+
+                this.nextPiece = getPieceFromSequence();
+
+                // Vérifier si partie terminée (collision dès le départ)
+                if (this.checkCollision(this.currentPiece)) {
+                    this.gameOver();
+                    return false;
+                }
+
+                this.drawPiece();
+                this.drawNextPiece();
+
+                return true;
+            }
+
+            drawPiece() {
+                this.clearBoard();
+                this.drawBoardState();
+
+                const { shape, color, row, col } = this.currentPiece;
+
+                shape.forEach((rowArray, r) => {
+                    rowArray.forEach((value, c) => {
+                        if (value) {
+                            const cellRow = row + r;
+                            const cellCol = col + c;
+
+                            if (cellRow >= 0) {
+                                const cells = this.boardElement.querySelectorAll('.cell');
+                                cells.forEach(cell => {
+                                    if (parseInt(cell.getAttribute('data-row')) === cellRow &&
+                                        parseInt(cell.getAttribute('data-col')) === cellCol) {
+                                        cell.style.backgroundColor = color;
+                                        cell.style.border = '1px solid rgba(255,255,255,0.2)';
+                                    }
+                                });
+                            }
+                        }
+                    });
+                });
+            }
+
+            drawNextPiece() {
+                this.nextPieceElement.innerHTML = '';
+
+                const { shape, color } = this.nextPiece;
+                const size = Math.max(shape.length, shape[0].length);
+                const blockSize = 20; // Réduit de 25 à 20
+                const offset = (100 - size * blockSize) / 2;
+
+                shape.forEach((rowArray, r) => {
+                    rowArray.forEach((value, c) => {
+                        if (value) {
+                            const cell = document.createElement('div');
+                            cell.style.position = 'absolute';
+                            cell.style.width = `${blockSize}px`;
+                            cell.style.height = `${blockSize}px`;
+                            cell.style.backgroundColor = color;
+                            cell.style.border = '1px solid rgba(255,255,255,0.2)';
+                            cell.style.top = `${offset + r * blockSize}px`;
+                            cell.style.left = `${offset + c * blockSize}px`;
+                            this.nextPieceElement.appendChild(cell);
+                        }
+                    });
+                });
+            }
+
+            updatePieceColors() {
+                // Mettre à jour la couleur de la pièce courante
+                if (this.currentPiece) {
+                    this.currentPiece.color = CURRENT_COLORS[this.currentPiece.type];
+                    this.drawPiece();
+                }
+
+                // Mettre à jour la couleur de la prochaine pièce
+                if (this.nextPiece) {
+                    this.nextPiece.color = CURRENT_COLORS[this.nextPiece.type];
+                    this.drawNextPiece();
+                }
+            }
+
+            clearBoard() {
+                const cells = this.boardElement.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    const row = parseInt(cell.getAttribute('data-row'));
+                    const col = parseInt(cell.getAttribute('data-col'));
+
+                    if (this.board[row][col] === 0) {
+                        cell.style.backgroundColor = '#111';
+                        cell.style.border = 'none';
+                    }
+                });
+            }
+
+            drawBoardState() {
+                const cells = this.boardElement.querySelectorAll('.cell');
+
+                cells.forEach(cell => {
+                    const row = parseInt(cell.getAttribute('data-row'));
+                    const col = parseInt(cell.getAttribute('data-col'));
+
+                    if (this.board[row][col] !== 0) {
+                        cell.style.backgroundColor = this.board[row][col];
+                        cell.style.border = '1px solid rgba(255,255,255,0.2)';
+                    }
+                });
+            }
+
+            movePiece(direction) {
+                if (this.isGameOver) return false;
+
+                let newRow = this.currentPiece.row;
+                let newCol = this.currentPiece.col;
+
+                switch (direction) {
+                    case 'left':
+                        newCol -= 1;
+                        break;
+                    case 'right':
+                        newCol += 1;
+                        break;
+                    case 'down':
+                        newRow += 1;
+                        break;
+                }
+
+                if (!this.checkCollision({ ...this.currentPiece, row: newRow, col: newCol })) {
+                    this.currentPiece.row = newRow;
+                    this.currentPiece.col = newCol;
+                    this.drawPiece();
+                    return true;
+                } else if (direction === 'down') {
+                    this.lockPiece();
+                    return false;
+                }
+
+                return false;
+            }
+
+            rotatePiece() {
+                if (this.isGameOver) return;
+
+                const rotated = [];
+                const shape = this.currentPiece.shape;
+
+                for (let c = 0; c < shape[0].length; c++) {
+                    const newRow = [];
+                    for (let r = shape.length - 1; r >= 0; r--) {
+                        newRow.push(shape[r][c]);
+                    }
+                    rotated.push(newRow);
+                }
+
+                const piece = {
+                    ...this.currentPiece,
+                    shape: rotated
+                };
+
+                // Tester différents décalages en cas de collision
+                const possibleOffsets = [0, -1, 1, -2, 2, -3, 3];
+                for (let offset of possibleOffsets) {
+                    if (!this.checkCollision({ ...piece, col: this.currentPiece.col + offset })) {
+                        this.currentPiece.shape = rotated;
+                        this.currentPiece.col += offset;
+                        this.drawPiece();
+                        return;
+                    }
+                }
+            }
+
+            checkCollision(piece) {
+                const { shape, row, col } = piece;
+
+                for (let r = 0; r < shape.length; r++) {
+                    for (let c = 0; c < shape[r].length; c++) {
+                        if (shape[r][c]) {
+                            const newRow = row + r;
+                            const newCol = col + c;
+
+                            if (newCol < 0 || newCol >= COLS || newRow >= ROWS ||
+                                (newRow >= 0 && this.board[newRow][newCol] !== 0)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                return false;
+            }
+
+            lockPiece() {
+                const { shape, color, row, col, type } = this.currentPiece;
+
+                shape.forEach((rowArray, r) => {
+                    rowArray.forEach((value, c) => {
+                        if (value) {
+                            const newRow = row + r;
+                            if (newRow >= 0) {
+                                this.board[newRow][col + c] = color;
+                            }
+                        }
+                    });
+                });
+
+                const linesCleared = this.clearLines();
+
+                // Vérifier si on peut appliquer des fonctionnalités spéciales
+                this.checkSpecialFeatures(linesCleared);
+
+                if (!this.spawnPiece()) {
+                    this.gameOver();
+                }
+            }
+
+            checkSpecialFeatures(linesCleared) {
+                // Vérifier chaque fonctionnalité spéciale
+
+                // 1. Cadeau surprise (2 lignes = pièce facile pour l'adversaire)
+                if (linesCleared === 2) {
+                    const opponent = this.isAI ? playerGame : aiGame;
+                    if (opponent && !opponent.isGameOver) {
+                        opponent.forcedNextPiece = getEasyPiece();
+                        showStatus(this.isAI ? "L'IA a complété 2 lignes! Le joueur reçoit un cadeau." : "Le joueur a complété 2 lignes! L'IA reçoit un cadeau.");
+                    }
+                }
+
+                // 2. Échange amical (Tetris = échange de ligne)
+                if (linesCleared === 4) {
+                    const opponent = this.isAI ? playerGame : aiGame;
+                    if (opponent && !opponent.isGameOver) {
+                        this.exchangeLine(opponent);
+                        showStatus(this.isAI ? "L'IA a fait un Tetris! Échange de ligne avec le joueur." : "Le joueur a fait un Tetris! Échange de ligne avec l'IA.");
+                        showEffect(this.isAI ? 'ai' : 'player', '🔄 Échange de ligne!');
+                        showEffect(this.isAI ? 'player' : 'ai', '🔄 Échange de ligne!');
+                    }
+                }
+
+                // 3. Pause douceur (tous les 1000 points)
+                if (Math.floor(this.score / 1000) > Math.floor((this.score - this.getLinePoints(linesCleared)) / 1000)) {
+                    startPauseDouceur();
+                    showStatus("Pause douceur activée! Les pièces tombent 20% plus lentement pendant 10 secondes.");
+                }
+            }
+
+            exchangeLine(opponent) {
+                // Trouver une ligne pleine dans mon tableau
+                let myFullLineIndex = -1;
+                for (let r = ROWS - 1; r >= 0; r--) {
+                    if (this.board[r].every(cell => cell !== 0)) {
+                        myFullLineIndex = r;
+                        break;
+                    }
+                }
+
+                // Trouver une ligne vide dans le tableau de l'adversaire
+                let opponentEmptyLineIndex = -1;
+                for (let r = ROWS - 1; r >= 0; r--) {
+                    if (opponent.board[r].every(cell => cell === 0)) {
+                        opponentEmptyLineIndex = r;
+                        break;
+                    }
+                }
+
+                // Si on trouve les deux, faire l'échange
+                if (myFullLineIndex !== -1 && opponentEmptyLineIndex !== -1) {
+                    // Échanger les lignes
+                    const temp = [...this.board[myFullLineIndex]];
+                    this.board[myFullLineIndex] = [...opponent.board[opponentEmptyLineIndex]];
+                    opponent.board[opponentEmptyLineIndex] = [...temp];
+
+                    // Redessiner les deux tableaux
+                    this.drawBoardState();
+                    opponent.drawBoardState();
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            clearLines() {
+                let linesCleared = 0;
+                let rowsCleared = [];
+
+                for (let row = ROWS - 1; row >= 0; row--) {
+                    if (this.board[row].every(cell => cell !== 0)) {
+                        // Marquer la ligne pour l'animation
+                        rowsCleared.push(row);
+                        linesCleared++;
+                    }
+                }
+
+                if (linesCleared > 0) {
+                    // Animation rapide des lignes complétées
+                    this.animateClearedLines(rowsCleared, () => {
+                        // Supprimer les lignes après l'animation
+                        for (let row of rowsCleared.sort((a, b) => b - a)) {
+                            this.board.splice(row, 1);
+                            // Ajouter une nouvelle ligne vide en haut
+                            this.board.unshift(Array(COLS).fill(0));
+                        }
+
+                        // Mettre à jour le score
+                        this.addScore(linesCleared);
+                        this.drawBoardState();
+                    });
+                }
+
+                return linesCleared;
+            }
+
+            animateClearedLines(rows, callback) {
+                const cells = this.boardElement.querySelectorAll('.cell');
+
+                // Flash blanc pour les lignes complétées
+                rows.forEach(row => {
+                    cells.forEach(cell => {
+                        if (parseInt(cell.getAttribute('data-row')) === row) {
+                            cell.style.backgroundColor = '#FFF';
+                        }
+                    });
+                });
+
+                // Retour à la couleur normale après 100ms
+                setTimeout(() => {
+                    callback();
+                }, 100);
+            }
+
+            // Modifier la méthode addScore pour vérifier si le jeu est toujours actif
+            addScore(linesCleared) {
+                // Nouveau système de score
+                const points = this.getLinePoints(linesCleared);
+                this.score += points;
+                this.lines += linesCleared;
+                this.level = Math.floor(this.lines / 10) + 1;
+
+                this.updateScore();
+                this.updateDropSpeed();
+
+                // Ne montrer l'effet que si le jeu est encore en cours
+                if (linesCleared > 0 && !this.isGameOver) {
+                    const playerType = this.isAI ? 'ai' : 'player';
+                    showEffect(playerType, `+${points} points!`);
+                }
+            }
+
+            getLinePoints(linesCleared) {
+                // Nouveau système de points: 50 par ligne avec bonus pour les combos
+                switch (linesCleared) {
+                    case 1: return 50;
+                    case 2: return (50 * 2 + 100);  // 50×2 + bonus de 100
+                    case 3: return (50 * 3 + 200);  // 50×3 + bonus de 200
+                    case 4: return (50 * 4 + 300);  // 50×4 + bonus de 300 (Tetris)
+                    default: return 0;
+                }
+            }
+
+            updateScore() {
+                this.scoreElement.textContent = this.score;
+                this.linesElement.textContent = this.lines;
+                this.levelElement.textContent = this.level;
+            }
+
+            updateDropSpeed() {
+                this.baseDropInterval = Math.max(100, (this.isAI ? 300 : 1000) - (this.level - 1) * 50);
+                this.dropInterval = this.baseDropInterval * this.speedModifier;
+
+                if (this.dropTimer) {
+                    clearInterval(this.dropTimer);
+                    this.dropTimer = null;
+                    this.startDrop();
+                }
+            }
+
+            applySpeedModifier(modifier) {
+                this.speedModifier = modifier;
+                this.dropInterval = this.baseDropInterval * this.speedModifier;
+
+                if (this.dropTimer) {
+                    clearInterval(this.dropTimer);
+                    this.dropTimer = null;
+                    this.startDrop();
+                }
+            }
+
+            startDrop() {
+                this.dropTimer = setInterval(() => {
+                    this.movePiece('down');
+                }, this.dropInterval);
+            }
+
+            hardDrop() {
+                if (this.isGameOver) return;
+
+                while (this.movePiece('down')) {
+                    // Continue jusqu'à collision
+                }
+            }
+
+            gameOver() {
+                this.isGameOver = true;
+
+                if (this.dropTimer) {
+                    clearInterval(this.dropTimer);
+                    this.dropTimer = null;
+                }
+
+                if (this.aiMoveTimer) {
+                    clearInterval(this.aiMoveTimer);
+                    this.aiMoveTimer = null;
+                }
+
+                this.gameOverElement.style.display = 'flex';
+                this.finalScoreElement.textContent = `Score: ${this.score}`;
+
+                showStatus(this.isAI ? "L'IA a perdu!" : "Le joueur a perdu!");
+                checkForWinner();
+            }
+
+            restart() {
+                if (this.dropTimer) {
+                    clearInterval(this.dropTimer);
+                    this.dropTimer = null;
+                }
+
+                if (this.aiMoveTimer) {
+                    clearInterval(this.aiMoveTimer);
+                    this.aiMoveTimer = null;
+                }
+
+                this.board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+                this.score = 0;
+                this.lines = 0;
+                this.level = 1;
+                this.isGameOver = false;
+                this.nextPiece = getPieceFromSequence();
+                this.forcedNextPiece = null;
+                this.speedModifier = 1;
+
+                this.gameOverElement.style.display = 'none';
+                this.updateScore();
+                this.createBoard();
+                this.spawnPiece();
+            }
+
+            // IA améliorée
+            startAI() {
+                if (this.isGameOver) return;
+
+                this.aiMoveTimer = setInterval(() => {
+                    if (!this.isGameOver) {
+                        this.makeAIMove();
+                    }
+                }, 300); // L'IA prend des décisions plus rapidement
+            }
+
+            stopAI() {
+                if (this.aiMoveTimer) {
+                    clearInterval(this.aiMoveTimer);
+                    this.aiMoveTimer = null;
+                }
+            }
+
+            makeAIMove() {
+                // Obtenir le meilleur mouvement
+                const bestMove = this.findBestMove();
+
+                // Appliquer le meilleur mouvement
+                if (bestMove) {
+                    // Rotation
+                    for (let i = 0; i < bestMove.rotations; i++) {
+                        this.rotatePiece();
+                    }
+
+                    // Mouvement horizontal
+                    const currentCol = this.currentPiece.col;
+                    if (bestMove.col > currentCol) {
+                        for (let i = 0; i < bestMove.col - currentCol; i++) {
+                            this.movePiece('right');
+                        }
+                    } else if (bestMove.col < currentCol) {
+                        for (let i = 0; i < currentCol - bestMove.col; i++) {
+                            this.movePiece('left');
+                        }
+                    }
+
+                    // Chute rapide
+                    this.hardDrop();
+                }
+            }
+
+            findBestMove() {
+                let bestScore = -Infinity;
+                let bestMove = null;
+
+                // Essayer toutes les rotations possibles
+                for (let rotations = 0; rotations < 4; rotations++) {
+                    // Faire une copie du tableau et de la pièce
+                    const tempPiece = JSON.parse(JSON.stringify(this.currentPiece));
+
+                    // Appliquer les rotations
+                    for (let i = 0; i < rotations; i++) {
+                        const rotated = [];
+                        for (let c = 0; c < tempPiece.shape[0].length; c++) {
+                            const newRow = [];
+                            for (let r = tempPiece.shape.length - 1; r >= 0; r--) {
+                                newRow.push(tempPiece.shape[r][c]);
+                            }
+                            rotated.push(newRow);
+                        }
+                        tempPiece.shape = rotated;
+                    }
+
+                    // Essayer toutes les positions horizontales
+                    for (let col = -2; col < COLS + 2; col++) {
+                        // Autoriser des positions légèrement en dehors du plateau
+                        // pour mieux gérer les pièces sur les bords
+                        tempPiece.col = col;
+                        tempPiece.row = 0;
+
+                        // Vérifier si cette position est valide
+                        if (this.checkCollision(tempPiece)) {
+                            continue;
+                        }
+
+                        // Simuler la chute
+                        let lowestRow = 0;
+                        while (!this.checkCollision({ ...tempPiece, row: tempPiece.row + 1 })) {
+                            tempPiece.row++;
+                            lowestRow = tempPiece.row;
+                        }
+
+                        // Évaluer cette position
+                        const score = this.evaluatePosition(tempPiece);
+
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestMove = {
+                                rotations,
+                                col,
+                                score
+                            };
+                        }
+                    }
+                }
+
+                return bestMove;
+            }
+
+            evaluatePosition(piece) {
+                // Simuler le placement de la pièce
+                const tempBoard = this.board.map(row => [...row]);
+                const { shape, color, row, col } = piece;
+
+                // Placer la pièce sur le tableau temporaire
+                for (let r = 0; r < shape.length; r++) {
+                    for (let c = 0; c < shape[r].length; c++) {
+                        if (shape[r][c] && row + r >= 0 && col + c >= 0 && col + c < COLS) {
+                            tempBoard[row + r][col + c] = color;
+                        }
+                    }
+                }
+
+                let score = 0;
+                let linesCleared = 0;
+                let holes = 0;
+                let bumpiness = 0;
+                let aggregate_height = 0;
+                let side_connections = 0;
+                let heights = Array(COLS).fill(0);
+
+                // Compter les lignes complètes
+                for (let r = 0; r < ROWS; r++) {
+                    if (tempBoard[r].every(cell => cell !== 0)) {
+                        linesCleared++;
+                    }
+                }
+
+                // Calculer la hauteur et les trous pour chaque colonne
+                for (let c = 0; c < COLS; c++) {
+                    let hasBlock = false;
+                    let height = 0;
+
+                    for (let r = 0; r < ROWS; r++) {
+                        if (tempBoard[r][c] !== 0) {
+                            hasBlock = true;
+                            height = ROWS - r;
+                            break;
+                        }
+                    }
+
+                    heights[c] = height;
+                    aggregate_height += height;
+
+                    // Compter les trous (cellules vides avec un bloc au-dessus)
+                    if (hasBlock) {
+                        for (let r = ROWS - height; r < ROWS; r++) {
+                            if (tempBoard[r][c] === 0) {
+                                holes++;
+                            }
+                        }
+                    }
+
+                    // Compter les connexions latérales pour éviter les espaces vides sur les côtés
+                    if (c > 0 && tempBoard[ROWS - 1][c] !== 0 && tempBoard[ROWS - 1][c - 1] !== 0) {
+                        side_connections++;
+                    }
+                }
+
+                // Calculer l'irrégularité (différence de hauteur entre colonnes adjacentes)
+                for (let i = 0; i < heights.length - 1; i++) {
+                    bumpiness += Math.abs(heights[i] - heights[i + 1]);
+                }
+
+                // Pénalité pour les trous dans les colonnes de bord
+                let edge_holes = 0;
+                for (let r = 0; r < ROWS; r++) {
+                    if (tempBoard[r][0] === 0 && r > 0 && tempBoard[r - 1][0] !== 0) edge_holes++;
+                    if (tempBoard[r][COLS - 1] === 0 && r > 0 && tempBoard[r - 1][COLS - 1] !== 0) edge_holes++;
+                }
+
+                // Compter les "puits" - colonnes avec des côtés plus hauts de chaque côté
+                let wells = 0;
+                for (let c = 0; c < COLS; c++) {
+                    let wellDepth = 0;
+                    for (let r = 0; r < ROWS; r++) {
+                        let leftHigher = c === 0 || (r < ROWS - heights[c - 1]);
+                        let rightHigher = c === COLS - 1 || (r < ROWS - heights[c + 1]);
+
+                        if (tempBoard[r][c] === 0 && r >= ROWS - heights[c] && leftHigher && rightHigher) {
+                            wellDepth++;
+                        }
+                    }
+                    wells += wellDepth * (wellDepth + 1) / 2; // Pénalité quadratique pour les puits profonds
+                }
+
+                // Poids pour chaque facteur d'évaluation
+                const weightsLines = 500;         // Plus important
+                const weightsHoles = -50;         // Fortement pénalisé
+                const weightsBumpiness = -10;     // Pénalité modérée
+                const weightsHeight = -2;         // Légère pénalité
+                const weightsWells = -30;         // Pénaliser les puits
+                const weightsSideConnections = 20; // Encourager les connexions latérales
+                const weightsEdgeHoles = -40;     // Pénaliser fortement les trous sur les bords
+
+                // Bonus pour compléter le plateau de manière uniforme
+                let edgePriority = 0;
+                if (heights[0] < heights[1]) edgePriority -= 30;
+                if (heights[COLS - 1] < heights[COLS - 2]) edgePriority -= 30;
+
+                // Calculer le score final
+                score = (linesCleared * weightsLines) +
+                    (holes * weightsHoles) +
+                    (bumpiness * weightsBumpiness) +
+                    (aggregate_height * weightsHeight) +
+                    (wells * weightsWells) +
+                    (side_connections * weightsSideConnections) +
+                    (edge_holes * weightsEdgeHoles) +
+                    edgePriority;
+
+                return score;
+            }
+        }
+
+        function checkForWinner() {
+            if (playerGame && aiGame && playerGame.isGameOver && aiGame.isGameOver) {
+                const winnerMessage = document.getElementById('winner-message');
+                winnerMessage.style.display = 'block';
+
+                if (playerGame.score > aiGame.score) {
+                    winnerMessage.textContent = 'Le Joueur gagne ! 🏆';
+                    winnerMessage.style.color = '#FFD700';
+                    showStatus("Partie terminée! Le Joueur gagne avec " + playerGame.score + " points contre " + aiGame.score + " points pour l'IA");
+                } else if (aiGame.score > playerGame.score) {
+                    winnerMessage.textContent = 'L\'IA gagne ! 🤖';
+                    winnerMessage.style.color = '#FF4500';
+                    showStatus("Partie terminée! L'IA gagne avec " + aiGame.score + " points contre " + playerGame.score + " points pour le Joueur");
+                } else {
+                    winnerMessage.textContent = 'Match nul ! 🤝';
+                    winnerMessage.style.color = '#32CD32';
+                    showStatus("Partie terminée! Match nul avec " + playerGame.score + " points chacun");
+                }
+
+                // Arrêter les effets spéciaux
+                stopArcEnCiel();
+                stopPauseDouceur();
+                stopGameTimer();
+            }
+        }
+
+        function startGame() {
+            console.log("Fonction startGame exécutée");
+            if (gameRunning) return;
+
+            gameRunning = true;
+            document.getElementById('winner-message').style.display = 'none';
+            showStatus("La partie commence !");
+
+            playerGame.start();
+            aiGame.start();
+
+            // Démarrer le timer du jeu pour les événements périodiques
+            startGameTimer();
+        }
+
+        function restartGame() {
+            console.log("Fonction restartGame exécutée");
+            gameRunning = false;
+            pieceIndex = 0; // Réinitialiser la séquence de pièces
+
+            // Arrêter les effets spéciaux
+            stopArcEnCiel();
+            stopPauseDouceur();
+            stopGameTimer();
+
+            document.getElementById('winner-message').style.display = 'none';
+            showStatus("Jeu redémarré. Cliquez sur Démarrer pour commencer une nouvelle partie.");
+
+            playerGame.restart();
+            aiGame.restart();
+        }
+
+        // Initialisation du jeu
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log("DOM chargé, initialisation du jeu...");
+            showStatus("Jeu initialisé. Cliquez sur Démarrer pour commencer.");
+
+            // Créer les éléments d'effet s'ils n'existent pas
+            const createEffectElement = (id) => {
+                let element = document.getElementById(id);
+                if (!element) {
+                    element = document.createElement('div');
+                    element.id = id;
+                    element.className = 'special-effect';
+                    // Ajouter l'élément au body s'il n'y a pas d'autre parent approprié
+                    document.body.appendChild(element);
+                    console.log(`Élément d'effet ${id} créé`);
+                }
+            };
+
+            // Afficher le message de statut
+            document.getElementById('status-message').style.display = 'block';
+
+            // Générer la séquence de pièces (identique pour joueur et IA)
+            generatePieceSequence();
+
+            // Initialiser le jeu du joueur
+            playerGame = new Tetris(
+                document.getElementById('player-board'),
+                document.getElementById('player-next-piece'),
+                document.getElementById('player-score'),
+                document.getElementById('player-lines'),
+                document.getElementById('player-level'),
+                document.getElementById('player-game-over'),
+                document.getElementById('player-final-score'),
+                false
+            );
+
+            // Initialiser le jeu de l'IA
+            aiGame = new Tetris(
+                document.getElementById('ai-board'),
+                document.getElementById('ai-next-piece'),
+                document.getElementById('ai-score'),
+                document.getElementById('ai-lines'),
+                document.getElementById('ai-level'),
+                document.getElementById('ai-game-over'),
+                document.getElementById('ai-final-score'),
+                true
+            );
+
+            // Créer les éléments d'effet pour le joueur et l'IA
+            createEffectElement('player-effect');
+            createEffectElement('ai-effect');
+
+            // Test des timers pour déboguer
+            document.getElementById('pause-timer').textContent = "";
+            document.getElementById('arc-timer').textContent = "";
+
+            // Contrôles du joueur
+            document.addEventListener('keydown', function (event) {
+                if (!gameRunning || playerGame.isGameOver) return;
+
+                switch (event.keyCode) {
+                    case 37: // Gauche
+                        playerGame.movePiece('left');
+                        break;
+                    case 39: // Droite
+                        playerGame.movePiece('right');
+                        break;
+                    case 40: // Bas
+                        playerGame.movePiece('down');
+                        break;
+                    case 38: // Haut (rotation)
+                        playerGame.rotatePiece();
+                        break;
+                    case 32: // Espace (chute rapide)
+                        playerGame.hardDrop();
+                        break;
+                }
+            });
+
+            // Bouton démarrer
+            document.getElementById('start-game').addEventListener('click', startGame);
+
+            // Bouton redémarrer
+            document.getElementById('restart-game').addEventListener('click', restartGame);
+
+            // Empêcher le défilement avec les touches fléchées
+            window.addEventListener('keydown', function (e) {
+                // Touches fléchées et espace
+                if ([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+                    e.preventDefault();
+                }
+            }, false);
+
+            console.log("Initialisation du jeu terminée");
+        });
+    </script>
+</body>
+
+</html>

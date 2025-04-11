@@ -34,12 +34,12 @@ Le jeu a été développé en guidant une IA générative à travers une série 
 
 1. Clonez ce dépôt :
    ```
-   git clone https://github.com/MrSuricate2/Tetris.git
+   git clone https://github.com/Kevin-Ferraretto-Cours/2025-HTML-CSS-JS-Tetris.git
    ```
 
 2. Naviguez vers le répertoire du projet :
    ```
-   cd Tetris
+   cd 2025-HTML-CSS-JS-Tetris
    ```
 
 3. Ouvrez le fichier `index.html` dans votre navigateur préféré.
